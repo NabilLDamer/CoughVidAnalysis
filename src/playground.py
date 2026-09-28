@@ -58,6 +58,9 @@ print(table.head(5))
 
 # Create the output folders for each
 
+raw_folder = "../data/coughvid_20211012"
+
+
 healthy_audio = "../data/healthy"
 os.makedirs(healthy_audio, exist_ok=True)
 
@@ -70,21 +73,21 @@ os.makedirs(sick_audio, exist_ok=True)
 array_uuid_label = table[['uuid', 'label']].to_numpy()
 # print(array_uuid_label)
 # for each instance, built the input file path: raw_folder (data) + uuid + ".oog | webm"
-for row in array_uuid_label:
-    input_file_path = "../data/coughvid20211012" + row[0]
+for uuid, label in array_uuid_label:
+    base = os.path.join(raw_folder, uuid)
 
-    if row[1] is 0:
-        output_file = "../data/healthy" + row[0] + ".wav"
+    if os.path.exists(base + ".ogg"):
+        input_file_path = base + ".ogg"
+    elif os.path.exists(base + ".webm"):
+        input_file_path = base + ".webm"
     else:
-        output_file = "../data/sick" + row[0] + ".wav"
+        print("Missing file:", uuid)
+        continue
 
-    # run the script, cover the script with a try and catch clause
-    try{
-        input_file_path+=".oog"
-        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", input_path, output_path], check=True)
-    }
-    except FileNotFoundError:
-        input_file_path+=".webm"
-        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", input_path, output_path], check=True)
+    out_folder = "../data/healthy" if label == 0 else "../data/sick"
+    output_file_path = os.path.join(out_folder, uuid + ".wav")
 
-
+    subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-i", input_file_path, output_file_path],
+        check=True
+    )
